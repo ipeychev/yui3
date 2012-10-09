@@ -76,6 +76,13 @@
                 "requires": [
                     "editor-base"
                 ]
+            },
+            "wikicreole": {
+                "requires": [
+                    "editor-para",
+                    "event-custom-base",
+                    "plugin"
+                ]
             }
         }
     }
