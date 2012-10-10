@@ -10135,6 +10135,13 @@ YUI.Env[Y.version].modules = YUI.Env[Y.version].modules || {
             "widget-base"
         ]
     },
+    "wikicreole": {
+        "requires": [
+            "editor-para",
+            "event-custom-base",
+            "plugin"
+        ]
+    },
     "yql": {
         "requires": [
             "jsonp",
@@ -10175,7 +10182,7 @@ YUI.Env[Y.version].modules = YUI.Env[Y.version].modules || {
         ]
     }
 };
-YUI.Env[Y.version].md5 = 'a28e022ad022130f7a4fb4ac77a2f1df';
+YUI.Env[Y.version].md5 = '44028c635cffc1f54051d83f5365318b';
 
 
 }, '@VERSION@', {"requires": ["loader-base"]});

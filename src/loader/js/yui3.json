@@ -2351,6 +2351,13 @@
             "widget-base"
         ]
     },
+    "wikicreole": {
+        "requires": [
+            "editor-para",
+            "event-custom-base",
+            "plugin"
+        ]
+    },
     "yql": {
         "requires": [
             "jsonp",

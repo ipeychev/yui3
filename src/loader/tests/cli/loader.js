@@ -3281,6 +3281,16 @@ suite.add(new YUITest.TestCase({
             //Testing A normal module
             Assert.isTrue((loader.sorted.indexOf("widget-uievents")) > -1, "Module (widget-uievents) not found in sorted array");
         },
+     "Testing wikicreole": function(data) {
+            var loader = new Y.Loader({
+                require: ["wikicreole"],
+                ignoreRegistered: true,
+                allowRollup: false
+            });
+            loader.calculate();
+            //Testing A normal module
+            Assert.isTrue((loader.sorted.indexOf("wikicreole")) > -1, "Module (wikicreole) not found in sorted array");
+        },
      "Testing yql": function(data) {
             var loader = new Y.Loader({
                 require: ["yql"],
