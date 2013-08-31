@@ -770,7 +770,7 @@ YUI.add('content-editable', function (Y, NAME) {
             */
             linkedcss: {
                 setter: '_setLinkedCSS',
-                validator: '_validateLinkedCSS',
+                //validator: '_validateLinkedCSS',
                 value: ''
             },
 
