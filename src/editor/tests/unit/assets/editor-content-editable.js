@@ -1,6 +1,9 @@
 YUI.add('editor-tests', function(Y) {
+
     var editor = null,
+
     iframe = null,
+
     fireKey = function(editor, key) {
         var inst = editor.getInstance();
 
@@ -18,17 +21,18 @@ YUI.add('editor-tests', function(Y) {
             keyCode: key
         });
     },
+
     template = {
         name: 'Editor Tests',
-        setUp : function() {
-        },
+        setUp : function() {},
 
-        tearDown : function() {
-        },
+        tearDown : function() {},
+
         test_load: function() {
             Y.Assert.isObject(Y.Plugin.ContentEditable, 'ContentEditable was not loaded');
             Y.Assert.isObject(Y.EditorBase, 'EditorBase was not loaded');
         },
+
         test_frame: function() {
             var iframeReady = false;
 
@@ -37,11 +41,13 @@ YUI.add('editor-tests', function(Y) {
                 content: 'This is a test.',
                 use: ['node','selector-css3', 'dd-drag', 'dd-ddm']
             });
+
             Y.Assert.isInstanceOf(Y.Plugin.ContentEditable, iframe, 'ContentEditable instance can not be created');
 
             iframe.after('ready', function() {
                 iframeReady = true;
             });
+
             iframe.render();
 
             this.wait(function() {
@@ -56,6 +62,7 @@ YUI.add('editor-tests', function(Y) {
             }, 1500);
 
         },
+
         test_frame_use: function() {
             var inst = iframe.getInstance(),
                 test = this;
@@ -76,6 +83,94 @@ YUI.add('editor-tests', function(Y) {
 
             iframe.delegate('click', function() {});
         },
+        'test delgation': function () {
+            var node = Y.Node.create('<div/>'),
+                ce = new Y.Plugin.ContentEditable({
+                    container: node,
+                    content: 'This is a test.<a href="#" class=".foo">Foo</a>',
+                    use: ['node','selector-css3', 'dd-drag', 'dd-ddm']
+                });
+
+            var inst = ce.delegate('click', function () {});
+            Y.Assert.isFalse(inst, 'Delegate does not return false when no instance is present.');
+
+            ce.render();
+
+            var del = ce.delegate('click', function (e) {}, node, 'a');
+            Y.Assert.isTrue(!!(del.evt && del.sub), 'Delgate returned does not have valid parameters');
+
+            var del_no_sel = ce.delegate('click', function (e) {}, 'a');
+            Y.Assert.isTrue(!!(del_no_sel.evt && del_no_sel.sub), 'Delgate returned does not have valid parameters');
+
+        },
+
+        'test rendering without a defined container': function () {
+            var ce = new Y.Plugin.ContentEditable({
+                    content: 'This is a test.',
+                    use: ['node', 'selector-css3', 'dd-drag', 'dd-ddm']
+                });
+
+            // test rendering to update container when _rendered is already true
+            ce._rendered = true;
+            ce.render();
+            Y.Assert.isFalse(!!(ce.get('container')), 'Container is not undefined');
+
+            // set _rendered back to false and continue with normal rendering
+            ce._rendered = false;
+            ce.render();
+
+            Y.Assert.isTrue(!!(ce.get('container')), 'Container was not created');
+            Y.Assert.isInstanceOf(Y.Node, ce.get('container'), 'Container created is not a node instance');
+
+            ce.get('container').remove(true);
+        },
+
+        'test getting id is accurate': function () {
+            var node = Y.Node.create('<div/>'),
+                ceID = new Y.Plugin.ContentEditable({
+                    content: 'This is a test.',
+                    container: node,
+                    use: ['node', 'selector-css3', 'dd-drag', 'dd-ddm'],
+                    id: 'myId'
+                }),
+                ce = new Y.Plugin.ContentEditable({
+                    content: 'This is a test.',
+                    container: node,
+                    use: ['node', 'selector-css3', 'dd-drag', 'dd-ddm']
+                });
+
+            ceID.render();
+            Y.Assert.areSame('myId', ceID.get('id'), 'Id is not held over');
+
+            ce.render();
+            Y.Assert.areSame('inlineedit-yui', ce.get('id').substr(0, ce.get('id').indexOf('_')), 'Id does not match prefix');
+        },
+
+        'test use after instantiation': function () {
+
+            var ce = new Y.Plugin.ContentEditable({
+                container: '#editor',
+                designMode: true,
+                content: 'This is a test.'
+            });
+
+            ce.render();
+
+            this.wait(function() {
+                ce.use('paginator');
+
+                this.wait(function () {
+                    var inst = ce.getInstance();
+
+                    Y.Assert.isInstanceOf(YUI, inst, 'Internal instance not created');
+                    Y.Assert.isObject(inst.Paginator, 'Paginator Not loaded inside the frame');
+                }, 1500);
+            },
+            1500);
+
+        },
+
+
         'test: _DOMPaste': function() {
             var OT = 'ORIGINAL_TARGET',
             fired = false;
@@ -113,6 +208,141 @@ YUI.add('editor-tests', function(Y) {
             inst.config.win = win;
 
         },
+        'test: _DOMPaste {empty}': function() {
+            var node = Y.Node.create('<div/>'),
+                ce = new Y.Plugin.ContentEditable({
+                    container: node,
+                    content: 'This is a test.<a href="#" class=".foo">Foo</a>',
+                    use: ['node','selector-css3', 'dd-drag', 'dd-ddm']
+                });
+
+            ce.render();
+
+            var OT = 'ORIGINAL_TARGET',
+                fired = false;
+
+            var inst = ce.getInstance(),
+                win = inst.config.win;
+
+            inst.config.win = {
+                clipboardData: {
+                    getData: function () {
+                        return '';
+                    },
+                    setData: function (key, val) {
+                        return true;
+                    }
+                }
+            };
+
+            ce.on('dom:paste', function(e) {
+                fired = true;
+                Y.Assert.areSame(e.clipboardData, null);
+            });
+
+            ce._DOMPaste({
+                _event: {
+                    target: OT,
+                    currentTarget: OT
+                }
+            });
+
+
+            Y.Assert.isTrue(fired);
+
+            inst.config.win = win;
+
+        },
+
+
+        'test: _DOMPaste {no data}': function() {
+            var node = Y.Node.create('<div/>'),
+                ce = new Y.Plugin.ContentEditable({
+                    container: node,
+                    content: 'This is a test.<a href="#" class=".foo">Foo</a>',
+                    use: ['node','selector-css3', 'dd-drag', 'dd-ddm']
+                });
+
+            ce.render();
+
+            var OT = 'ORIGINAL_TARGET',
+                fired = false;
+
+            var inst = ce.getInstance(),
+                win = inst.config.win;
+
+            inst.config.win = {
+            };
+
+            ce.on('dom:paste', function(e) {
+                fired = true;
+                Y.Assert.areSame(e.clipboardData, null);
+            });
+
+            ce._DOMPaste({
+                _event: {
+                    target: OT,
+                    currentTarget: OT
+                }
+            });
+
+            inst.config.win = {
+                clipboardData: {
+                    getData: function () {
+                        return '';
+                    },
+                    setData: function (key, val) {
+                        return false;
+                    }
+                }
+            };
+
+            ce._DOMPaste({
+                _event: {
+                    target: OT,
+                    currentTarget: OT
+                }
+            });
+
+            Y.Assert.isTrue(fired);
+
+            inst.config.win = win;
+        },
+
+        'test: empty _DOMPaste': function() {
+            var OT = 'ORIGINAL_TARGET',
+            fired = false;
+
+            var inst = iframe.getInstance(),
+            win = inst.config.win;
+
+            inst.config.win = {
+                clipboardData: {
+                    getData: function() {
+                        return 'foobar';
+                    }
+                }
+            };
+            iframe.on('dom:paste', function(e) {
+                fired = true;
+                Y.Assert.areSame(e.clipboardData.data, 'foobar');
+                Y.Assert.areSame(e.clipboardData.getData(), 'foobar');
+            });
+            iframe._DOMPaste({
+                _event: {
+
+                    target: OT,
+                    currentTarget: OT,
+
+                }
+            });
+
+            Y.Assert.isTrue(fired);
+
+            inst.config.win = win;
+
+        },
+
         test_frame_destroy: function() {
             iframe.destroy();
 
@@ -549,20 +779,132 @@ YUI.add('editor-tests', function(Y) {
             Y.Assert.isTrue(out[0].test('p'));
 
         },
+
+        'test _onDomEvent with forced incorrect data': function () {
+            var node = Y.Node.create('<div/>'),
+                ce = new Y.Plugin.ContentEditable({
+                    content: '<p>This is a test.</p>',
+                    container: node
+                });
+
+            ce.render();
+
+            ce.on('dom:keypress', function (e) {
+                Y.Assert.areEqual(100, e.pageX);
+                Y.Assert.areEqual(100, e.pageY);
+                Y.Assert.areEqual('keypress', e.type);
+            });
+            ce._onDomEvent({ pageX: 100, pageY: 100, type: 'keypress' });
+
+            ce.on('dom:click', function (e) {
+                Y.Assert.areEqual('click', e.type);
+            });
+            ce._onDomEvent({ pageX: 100, pageY: 100, type: 'click' });
+        },
+
+        'test extra content ready calls': function () {
+            var  node = Y.Node.create('<div/>'),
+                ce = new Y.Plugin.ContentEditable({
+                    content: '<p>This is a test.</p>',
+                    container: node
+                }),
+                inst = ce.getInstance();
+
+            Y.Assert.isNull(inst);
+
+            ce._ready = true;
+            ce._onContentReady();
+
+            inst = ce.getInstance();
+            Y.Assert.isNull(inst);
+
+            ce._ready = false;
+            ce.render();
+
+            inst = ce.getInstance();
+            Y.Assert.isNotNull(inst);
+        },
+
+        'test extra css added after render': function () {
+            var node = Y.Node.create('<div/>'),
+                ce = new Y.Plugin.ContentEditable({
+                    content: '<p class="bar">This is a test.</p>',
+                    container: node
+                }),
+                color;
+
+            Y.one('body').append(node);
+            ce.render();
+
+            ce.set('extracss', '');
+
+            ce.set('extracss', '.bar { color: blue; }');
+
+            color = node.one('.bar').getStyle('color');
+            color = Y.Color.toHex(color);
+
+            Y.Assert.areSame('#0000FF', color);
+
+            ce.set('extracss', '.bar { color: red; }');
+
+            color = node.one('.bar').getStyle('color');
+            color = Y.Color.toHex(color);
+
+            Y.Assert.areSame('#FF0000', color);
+
+            node.remove(true);
+        },
+
+        'test _setLinkedCSS works properly': function () {
+            var test = this,
+                node = Y.Node.create('<div/>'),
+                ce = new Y.Plugin.ContentEditable({
+                    content: '<p><span class="pure-button">This</span> is a <b class="foo">test</b>.</p>',
+                    container: node,
+                    extracss: '.foo { font-weight: normal; color: black; background-color: yellow; }'
+                }),
+                url = 'http://yui.yahooapis.com/pure/0.2.1/pure-min.css';
+
+            Y.one('body').append(node);
+
+            node.setStyles({
+                borderColor: 'red',
+                borderWidth: '1px',
+                borderStyle: 'solid'
+            });
+
+            ce.render();
+
+            ce.set('linkedcss', url);
+
+
+            setTimeout(function () {
+                Y.all('link').some(function (node) {
+                    if (node.getAttribute('href') === url) {
+                        test.resume(function () {
+                            Y.Assert.isTrue(true);
+                        });
+                        return true;
+                    }
+                });
+            }, 1000);
+            test.wait();
+        },
+
         _should: {
             fail: {
-                test_selection_methods: (Y.UA.ie ? true : false)
+                'test_selection_methods': (Y.UA.ie ? true : false)
             },
             ignore: {
                 'test: EditorSelection': Y.UA.phantomjs,
-                test_selection_methods: Y.UA.phantomjs,
-                test_br_plugin: Y.UA.phantomjs
+                'test_selection_methods': Y.UA.phantomjs,
+                'test_br_plugin': Y.UA.phantomjs
             },
             error: { //These tests should error
-                test_selection_methods: (Y.UA.ie ? true : false),
-                test_double_plug: true,
-                test_double_plug2: true,
-                test_bidi_noplug: true
+                'test_selection_methods': (Y.UA.ie ? true : false),
+                'test_double_plug': true,
+                'test_double_plug2': true,
+                'test_bidi_noplug': true
             }
         }
     };
