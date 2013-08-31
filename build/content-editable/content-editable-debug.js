@@ -344,7 +344,6 @@ YUI.add('content-editable', function (Y, NAME) {
         _setLinkedCSS: function(css) {
             if (this._ready) {
                 var inst = this.getInstance();
-
                 inst.Get.css(css);
             } else {
                 //This needs to be wrapped in a contentready callback for the !_ready state
@@ -770,8 +769,8 @@ YUI.add('content-editable', function (Y, NAME) {
             */
             linkedcss: {
                 setter: '_setLinkedCSS',
-                //validator: '_validateLinkedCSS',
-                value: ''
+                validator: '_validateLinkedCSS'
+                //value: ''
             },
 
             /**
