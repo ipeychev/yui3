@@ -20,6 +20,11 @@ Rich Text Editor Change History
 
   [Ticket #1041] [ipeychev]
 
+3.12.0
+------
+
+* No changes.
+
 3.11.0
 ------
 
